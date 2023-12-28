@@ -1,5 +1,6 @@
 ﻿using Logic.Dtos;
 using Logic.Entities;
+using Logic.Entities.ValueObjects;
 using Logic.Repositories;
 using Logic.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,9 @@ public class CustomersController : Controller
     private readonly CustomerRepository _customerRepository;
     private readonly CustomerService _customerService;
 
-    public CustomersController(MovieRepository movieRepository, CustomerRepository customerRepository, CustomerService customerService)
+    public CustomersController(MovieRepository movieRepository,
+        CustomerRepository customerRepository,
+        CustomerService customerService)
     {
         _customerRepository = customerRepository;
         _movieRepository = movieRepository;
@@ -24,17 +27,14 @@ public class CustomersController : Controller
     [Route("{id}")]
     public IActionResult Get(long id)
     {
-        Customer customer = _customerRepository.GetById(id);
-        if (customer == null)
-        {
-            return NotFound();
-        }
+        var customer = _customerRepository.GetById(id);
+        if (customer == null) return NotFound();
 
-        var dto = new CustomerDto()
+        var dto = new CustomerDto
         {
             Id = customer.Id,
-            Name = customer.Name,
-            Email = customer.Email,
+            Name = customer.Name.Value,
+            Email = customer.Email.Value,
             MoneySpent = customer.MoneySpent,
             Status = customer.Status.ToString(),
             StatusExpirationDate = customer.StatusExpirationDate,
@@ -57,15 +57,15 @@ public class CustomersController : Controller
     [HttpGet]
     public JsonResult GetList()
     {
-        IReadOnlyList<Customer> customers = _customerRepository.GetList();
+        var customers = _customerRepository.GetList();
 
-        var dto = customers.Select(x => new CustomerInListDto()
+        var dto = customers.Select(x => new CustomerInListDto
         {
             Id = x.Id,
-            Name = x.Name,
-            Email = x.Email,
+            Name = x.Name.Value,
+            Email = x.Email.Value,
             Status = x.Status.ToString(),
-            StatusExpirationDate = x.StatusExpirationDate,
+            StatusExpirationDate = x.StatusExpirationDate
         }).ToList();
 
         return Json(dto);
@@ -76,24 +76,24 @@ public class CustomersController : Controller
     {
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var customerNameResult = CustomerName.Create(item.Name);
+            var emailResult = Email.Create(item.Email);
 
-            if (_customerRepository.GetByEmail(item.Email) != null)
-            {
+            var result = Result.Combine(customerNameResult, emailResult);
+
+            if (result.IsFailure) return BadRequest(result.Error);
+
+            if (_customerRepository.GetByEmail(emailResult.Value) != null)
                 return BadRequest("Email is already in use: " + item.Email);
-            }
 
             var customer = new Customer
             {
-                Name = item.Name,
-                Email = item.Email,
-                MoneySpent = 0,
+                Name = customerNameResult.Value,
+                Email = emailResult.Value,
+                MoneySpent = Dollars.Of(0),
                 Status = CustomerStatus.Regular
             };
-            
+
             _customerRepository.Add(customer);
             _customerRepository.SaveChanges();
 
@@ -111,18 +111,14 @@ public class CustomersController : Controller
     {
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var customerNameResult = CustomerName.Create(item.Name);
 
-            Customer customer = _customerRepository.GetById(id);
-            if (customer == null)
-            {
-                return BadRequest("Invalid customer id: " + id);
-            }
+            if (customerNameResult.IsFailure) return BadRequest(customerNameResult.Error);
 
-            customer.Name = item.Name;
+            var customer = _customerRepository.GetById(id);
+            if (customer == null) return BadRequest("Invalid customer id: " + id);
+
+            customer.Name = customerNameResult.Value;
             _customerRepository.SaveChanges();
 
             return Ok();
@@ -139,22 +135,14 @@ public class CustomersController : Controller
     {
         try
         {
-            Movie movie = _movieRepository.GetById(movieId);
-            if (movie == null)
-            {
-                return BadRequest("Invalid movie id: " + movieId);
-            }
+            var movie = _movieRepository.GetById(movieId);
+            if (movie == null) return BadRequest("Invalid movie id: " + movieId);
 
-            Customer customer = _customerRepository.GetById(id);
-            if (customer == null)
-            {
-                return BadRequest("Invalid customer id: " + id);
-            }
+            var customer = _customerRepository.GetById(id);
+            if (customer == null) return BadRequest("Invalid customer id: " + id);
 
-            if (customer.PurchasedMovies.Any(x => x.MovieId == movie.Id && (x.ExpirationDate == null || x.ExpirationDate.Value >= DateTime.UtcNow)))
-            {
+            if (customer.PurchasedMovies.Any(x => x.MovieId == movie.Id && !x.ExpirationDate.IsExpired))
                 return BadRequest("The movie is already purchased: " + movie.Name);
-            }
 
             _customerService.PurchaseMovie(customer, movie);
 
@@ -174,22 +162,14 @@ public class CustomersController : Controller
     {
         try
         {
-            Customer customer = _customerRepository.GetById(id);
-            if (customer == null)
-            {
-                return BadRequest("Invalid customer id: " + id);
-            }
+            var customer = _customerRepository.GetById(id);
+            if (customer == null) return BadRequest("Invalid customer id: " + id);
 
-            if (customer.Status == CustomerStatus.Advanced && (customer.StatusExpirationDate == null || customer.StatusExpirationDate.Value < DateTime.UtcNow))
-            {
+            if (customer is { Status: CustomerStatus.Advanced, StatusExpirationDate.IsExpired: false })
                 return BadRequest("The customer already has the Advanced status");
-            }
 
-            bool success = _customerService.PromoteCustomer(customer);
-            if (!success)
-            {
-                return BadRequest("Cannot promote the customer");
-            }
+            var success = _customerService.PromoteCustomer(customer);
+            if (!success) return BadRequest("Cannot promote the customer");
 
             _customerRepository.SaveChanges();
 

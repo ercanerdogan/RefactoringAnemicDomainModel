@@ -1,4 +1,5 @@
 ﻿using Logic.Entities;
+using Logic.Entities.ValueObjects;
 
 namespace Logic.Services;
 
@@ -11,42 +12,33 @@ public class CustomerService
         _movieService = movieService;
     }
 
-    private decimal CalculatePrice(CustomerStatus status, DateTime? statusExpirationDate, LicensingModel licensingModel)
+    private Dollars CalculatePrice(CustomerStatus status, ExpirationDate statusExpirationDate,
+        LicensingModel licensingModel)
     {
-        decimal price;
-        switch (licensingModel)
+        var price = licensingModel switch
         {
-            case LicensingModel.TwoDays:
-                price = 4;
-                break;
+            LicensingModel.TwoDays => Dollars.Of(4),
+            LicensingModel.LifeLong => Dollars.Of(8),
+            _ => throw new ArgumentOutOfRangeException()
+        };
 
-            case LicensingModel.LifeLong:
-                price = 8;
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        if (status == CustomerStatus.Advanced && (statusExpirationDate == null || statusExpirationDate.Value >= DateTime.UtcNow))
-        {
-            price = price * 0.75m;
-        }
+        if (status == CustomerStatus.Advanced && !statusExpirationDate.IsExpired) price = price * 0.75m;
 
         return price;
     }
 
     public void PurchaseMovie(Customer customer, Movie movie)
     {
-        DateTime? expirationDate = _movieService.GetExpirationDate(movie.LicensingModel);
-        decimal price = CalculatePrice(customer.Status, customer.StatusExpirationDate, movie.LicensingModel);
+        var expirationDate = _movieService.GetExpirationDate(movie.LicensingModel);
+        var price = CalculatePrice(customer.Status, customer.StatusExpirationDate, movie.LicensingModel);
 
         var purchasedMovie = new PurchasedMovie
         {
             MovieId = movie.Id,
             CustomerId = customer.Id,
             ExpirationDate = expirationDate,
-            Price = price
+            Price = price,
+            PurchaseDate = DateTime.UtcNow
         };
 
         customer.PurchasedMovies.Add(purchasedMovie);
@@ -56,7 +48,9 @@ public class CustomerService
     public bool PromoteCustomer(Customer customer)
     {
         // at least 2 active movies during the last 30 days
-        if (customer.PurchasedMovies.Count(x => x.ExpirationDate == null || x.ExpirationDate.Value >= DateTime.UtcNow.AddDays(-30)) < 2)
+        if (customer.PurchasedMovies.Count(x =>
+                x.ExpirationDate == ExpirationDate.Infinite || x.ExpirationDate.Date >= DateTime.UtcNow.AddDays(-30)) <
+            2)
             return false;
 
         // at least 100 dollars spent during the last year
@@ -64,7 +58,7 @@ public class CustomerService
             return false;
 
         customer.Status = CustomerStatus.Advanced;
-        customer.StatusExpirationDate = DateTime.UtcNow.AddYears(1);
+        customer.StatusExpirationDate = (ExpirationDate)DateTime.UtcNow.AddYears(1);
 
         return true;
     }
