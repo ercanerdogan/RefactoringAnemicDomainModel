@@ -31,18 +31,7 @@ public class CustomerService
     {
         var expirationDate = _movieService.GetExpirationDate(movie.LicensingModel);
         var price = CalculatePrice(customer.Status, customer.StatusExpirationDate, movie.LicensingModel);
-
-        var purchasedMovie = new PurchasedMovie
-        {
-            MovieId = movie.Id,
-            CustomerId = customer.Id,
-            ExpirationDate = expirationDate,
-            Price = price,
-            PurchaseDate = DateTime.UtcNow
-        };
-
-        customer.PurchasedMovies.Add(purchasedMovie);
-        customer.MoneySpent += price;
+        customer.AddPurchasedMovie(movie, expirationDate, price);
     }
 
     public bool PromoteCustomer(Customer customer)

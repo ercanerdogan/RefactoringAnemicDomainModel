@@ -6,9 +6,10 @@ public class Customer : Entity
 {
     protected Customer()
     {
+        _purchasedMovies = new List<PurchasedMovie>();
         
     }
-    public Customer(CustomerName name, Email email)
+    public Customer(CustomerName name, Email email) : this()
     {
         _name = name ?? throw new ArgumentNullException(nameof(name));
         _email = email ?? throw new ArgumentNullException(nameof(email));
@@ -48,8 +49,24 @@ public class Customer : Entity
     public virtual Dollars MoneySpent
     {
         get => Dollars.Of(_moneySpent);
-        set => _moneySpent = value;
+        protected set => _moneySpent = value;
     }
 
-    public virtual IList<PurchasedMovie> PurchasedMovies { get; set; }
+    private readonly IList<PurchasedMovie> _purchasedMovies;
+    public virtual IReadOnlyList<PurchasedMovie> PurchasedMovies => _purchasedMovies.ToList();
+
+    public virtual void AddPurchasedMovie(Movie movie, ExpirationDate expirationDate, Dollars price)
+    {
+        var purchasedMovie = new PurchasedMovie
+        {
+            MovieId = movie.Id,
+            CustomerId = Id,
+            ExpirationDate = expirationDate,
+            Price = price,
+            PurchaseDate = DateTime.UtcNow
+        };
+
+        _purchasedMovies.Add(purchasedMovie);
+        MoneySpent += price;
+    }
 }

@@ -15,6 +15,6 @@ public class PurchasedMovieMap : ClassMap<PurchasedMovie>
         Map(x => x.MovieId);
         Map(x => x.CustomerId);
 
-        References(x => x.Movie).LazyLoad(Laziness.False).ReadOnly();
+        References(x => x.Movie).Access.CamelCaseField(Prefix.Underscore).LazyLoad(Laziness.False).ReadOnly();
     }
 }
