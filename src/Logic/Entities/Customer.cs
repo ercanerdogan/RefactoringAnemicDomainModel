@@ -4,6 +4,19 @@ namespace Logic.Entities;
 
 public class Customer : Entity
 {
+    protected Customer()
+    {
+        
+    }
+    public Customer(CustomerName name, Email email)
+    {
+        _name = name ?? throw new ArgumentNullException(nameof(name));
+        _email = email ?? throw new ArgumentNullException(nameof(email));
+        MoneySpent = Dollars.Of(0);
+        Status = CustomerStatus.Regular;
+        StatusExpirationDate = null;
+    }
+
     private string _name;
 
     public virtual CustomerName Name
