@@ -1,8 +1,8 @@
 ﻿using FluentNHibernate;
 using FluentNHibernate.Mapping;
-using Logic.Entities;
 
-namespace Logic.Mappings;
+
+namespace Logic.Movies;
 
 public class MovieMap : ClassMap<Movie>
 {
@@ -20,7 +20,7 @@ public class MovieMap : ClassMap<Movie>
     {
         public TwoDaysMovieMap()
         {
-            DiscriminatorValue((int)LicensingModel.TwoDays);
+            DiscriminatorValue(1);
         }
     }
 
@@ -28,7 +28,7 @@ public class MovieMap : ClassMap<Movie>
     {
         public LifeLongMovieMap()
         {
-            DiscriminatorValue((int)LicensingModel.LifeLong);
+            DiscriminatorValue(2);
         }
     }
 }

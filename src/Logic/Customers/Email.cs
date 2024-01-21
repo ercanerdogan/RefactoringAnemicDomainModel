@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
+using Logic.Common;
 
-namespace Logic.Entities.ValueObjects;
+namespace Logic.Customers;
 
 public class Email : ValueObject<Email>
 {

@@ -1,6 +1,6 @@
-﻿using Logic.Entities.ValueObjects;
+﻿using Logic.Common;
 
-namespace Logic.Entities;
+namespace Logic.Customers;
 
 public class CustomerStatus : ValueObject<CustomerStatus>
 {
@@ -16,10 +16,10 @@ public class CustomerStatus : ValueObject<CustomerStatus>
 
     private CustomerStatus()
     {
-        
+
     }
 
-    private CustomerStatus(CustomerStatusType type, ExpirationDate expirationDate) :this()
+    private CustomerStatus(CustomerStatusType type, ExpirationDate expirationDate) : this()
     {
         Type = type;
         _expirationDate = expirationDate ?? throw new ArgumentNullException(nameof(expirationDate));

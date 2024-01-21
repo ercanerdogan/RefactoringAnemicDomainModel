@@ -1,7 +1,6 @@
 ﻿using FluentNHibernate.Mapping;
-using Logic.Entities;
 
-namespace Logic.Mappings;
+namespace Logic.Customers;
 
 public class CustomerMap : ClassMap<Customer>
 {
@@ -15,8 +14,8 @@ public class CustomerMap : ClassMap<Customer>
 
         Component(x => x.Status, y =>
         {
-            y.Map(x=>x.Type, "Status").CustomType<int>();
-            y.Map(x=>x.ExpirationDate, "StatusExpirationDate").CustomType<DateTime?>()
+            y.Map(x => x.Type, "Status").CustomType<int>();
+            y.Map(x => x.ExpirationDate, "StatusExpirationDate").CustomType<DateTime?>()
                 .Access.CamelCaseField(Prefix.Underscore)
                 .Nullable();
         });

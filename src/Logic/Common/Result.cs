@@ -1,4 +1,4 @@
-﻿namespace Logic.Entities;
+﻿namespace Logic.Common;
 
 public class Result
 {

@@ -1,7 +1,8 @@
-﻿using Logic.Entities.ValueObjects;
+﻿using Logic.Common;
+using Logic.Customers;
 using Newtonsoft.Json;
 
-namespace Logic.Entities;
+namespace Logic.Movies;
 
 public abstract class Movie : Entity
 {

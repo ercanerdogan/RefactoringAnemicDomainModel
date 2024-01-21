@@ -1,4 +1,4 @@
-﻿namespace Logic.Entities.ValueObjects;
+﻿namespace Logic.Common;
 
 public abstract class ValueObject<T> where T : ValueObject<T>
 {

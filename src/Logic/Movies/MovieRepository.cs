@@ -1,7 +1,7 @@
-﻿using Logic.Entities;
+﻿using Logic.Common;
 using Logic.Utils;
 
-namespace Logic.Repositories;
+namespace Logic.Movies;
 
 public class MovieRepository : Repository<Movie>
 {

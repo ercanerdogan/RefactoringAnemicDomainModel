@@ -1,4 +1,6 @@
-﻿namespace Logic.Entities.ValueObjects;
+﻿using Logic.Common;
+
+namespace Logic.Customers;
 
 public class ExpirationDate : ValueObject<ExpirationDate>
 {

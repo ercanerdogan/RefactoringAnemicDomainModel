@@ -1,6 +1,7 @@
-﻿using Logic.Entities.ValueObjects;
+﻿using Logic.Common;
+using Logic.Movies;
 
-namespace Logic.Entities;
+namespace Logic.Customers;
 
 public class PurchasedMovie : Entity
 {
@@ -29,12 +30,12 @@ public class PurchasedMovie : Entity
     {
     }
 
-    internal PurchasedMovie(Movie movie, 
+    internal PurchasedMovie(Movie movie,
         Customer customer,
         Dollars price,
         ExpirationDate expirationDate)
     {
-        if(price == null || price.IsZero)
+        if (price == null || price.IsZero)
             throw new ArgumentNullException(nameof(price));
 
         if (expirationDate == null || expirationDate.IsExpired)
