@@ -12,9 +12,9 @@ public class PurchasedMovieMap : ClassMap<PurchasedMovie>
         Map(x => x.Price).CustomType<decimal>().Access.CamelCaseField(Prefix.Underscore);
         Map(x => x.PurchaseDate);
         Map(x => x.ExpirationDate).CustomType<DateTime?>().Access.CamelCaseField(Prefix.Underscore).Nullable();
-        Map(x => x.MovieId);
-        Map(x => x.CustomerId);
 
-        References(x => x.Movie).Access.CamelCaseField(Prefix.Underscore).LazyLoad(Laziness.False).ReadOnly();
+        References(x => x.Movie);
+        References(x => x.Customer);
+
     }
 }

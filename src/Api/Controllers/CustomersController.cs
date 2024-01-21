@@ -2,7 +2,6 @@
 using Logic.Entities;
 using Logic.Entities.ValueObjects;
 using Logic.Repositories;
-using Logic.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -12,15 +11,12 @@ public class CustomersController : Controller
 {
     private readonly MovieRepository _movieRepository;
     private readonly CustomerRepository _customerRepository;
-    private readonly CustomerService _customerService;
 
     public CustomersController(MovieRepository movieRepository,
-        CustomerRepository customerRepository,
-        CustomerService customerService)
+        CustomerRepository customerRepository)
     {
         _customerRepository = customerRepository;
         _movieRepository = movieRepository;
-        _customerService = customerService;
     }
 
     [HttpGet]
@@ -36,8 +32,8 @@ public class CustomersController : Controller
             Name = customer.Name.Value,
             Email = customer.Email.Value,
             MoneySpent = customer.MoneySpent,
-            Status = customer.Status.ToString(),
-            StatusExpirationDate = customer.StatusExpirationDate,
+            Status = customer.Status.Type.ToString(),
+            StatusExpirationDate = customer.Status.ExpirationDate,
             PurchasedMovies = customer.PurchasedMovies.Select(x => new PurchasedMovieDto
             {
                 Price = x.Price,
@@ -64,8 +60,8 @@ public class CustomersController : Controller
             Id = x.Id,
             Name = x.Name.Value,
             Email = x.Email.Value,
-            Status = x.Status.ToString(),
-            StatusExpirationDate = x.StatusExpirationDate
+            Status = x.Status.Type.ToString(),
+            StatusExpirationDate = x.Status.ExpirationDate
         }).ToList();
 
         return Json(dto);
@@ -135,10 +131,10 @@ public class CustomersController : Controller
             var customer = _customerRepository.GetById(id);
             if (customer == null) return BadRequest("Invalid customer id: " + id);
 
-            if (customer.PurchasedMovies.Any(x => x.MovieId == movie.Id && !x.ExpirationDate.IsExpired))
+            if (customer.PurchasedMovies.Any(x => x.Movie.Id == movie.Id && !x.ExpirationDate.IsExpired))
                 return BadRequest("The movie is already purchased: " + movie.Name);
 
-            _customerService.PurchaseMovie(customer, movie);
+            customer.PurchaseMovie(movie);
 
             _customerRepository.SaveChanges();
 
@@ -159,10 +155,10 @@ public class CustomersController : Controller
             var customer = _customerRepository.GetById(id);
             if (customer == null) return BadRequest("Invalid customer id: " + id);
 
-            if (customer is { Status: CustomerStatus.Advanced, StatusExpirationDate.IsExpired: false })
+            if (customer.Status.IsAdvanced)
                 return BadRequest("The customer already has the Advanced status");
 
-            var success = _customerService.PromoteCustomer(customer);
+            var success = customer.Promote();
             if (!success) return BadRequest("Cannot promote the customer");
 
             _customerRepository.SaveChanges();

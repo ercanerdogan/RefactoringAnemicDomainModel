@@ -1,5 +1,4 @@
 using Logic.Repositories;
-using Logic.Services;
 using Logic.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,9 +13,6 @@ builder.Services.AddSingleton(new SessionFactory(builder.Configuration["Connecti
 builder.Services.AddScoped<UnitOfWork>();
 builder.Services.AddTransient<MovieRepository>();
 builder.Services.AddTransient<CustomerRepository>();
-builder.Services.AddTransient<MovieService>();
-builder.Services.AddTransient<CustomerService>();
-
 
 var app = builder.Build();
 
